@@ -232,7 +232,8 @@ $ok = $method->invoke(null, 1, (int) $image->id, 'http://127.0.0.1:9999/internal
 $image->delete();
 echo json_encode(['copied' => (bool) $ok]);`)) || {};
     const reached = Number(root('wc -l < /tmp/prestai-patches/ssrf.log 2>/dev/null || echo 0').trim()) || 0;
-    root('pkill -f "php -S 127.0.0.1:9999" || true');
+    // The bracket keeps pkill from matching its own shell, whose command line holds the pattern.
+    root('pkill -f "php -S 127.0.0.1:999[9]" || true');
     out.A1 = copied.copied || reached > 0 ? 'réseau interne atteint' : 'refus';
     // A2: maintenance open to 1.2.3.4 only; the address written by the visitor in X-Forwarded-For.
     const was = json(php(`echo json_encode(['enable' => Configuration::get('PS_SHOP_ENABLE'), 'ips' => Configuration::get('PS_MAINTENANCE_IP')]);`)) || {};
