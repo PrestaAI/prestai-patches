@@ -1,0 +1,218 @@
+# Contrôles du catalogue des correctifs de sécurité de PrestaShop (lu par PrestAI Core 2.27.0 et suivantes).
+# À chaque push (sur une branche) : le catalogue reconstruit à l'octet près depuis ses sources, les fichiers PHP
+# corrigés lisibles, la signature vérifiée quand elle est là. À la demande (Actions > CI > Run workflow) et à chaque
+# tag catalog-NNNN (release.yml), en plus : sur une boutique PrestaShop propre de chaque version du catalogue, avec la
+# dernière release de PrestAI Core, chaque correctif appliqué puis retiré, les failles constatées avant et refusées
+# après (tests/ci/patches.cjs) ; puis la montée de version par l'assistant de PrestaShop, correctifs appliqués
+# (tests/upgrade/upgrade.cjs). Jamais sur une pull request : les secrets de la GitHub App n'y vont pas.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      signed:
+        description: catalog.json.sig vérifiée par Core avec ses propres clés (release)
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PLAYWRIGHT_CORE_VERSION: 1.64.1
+  AJV_VERSION: 8.17.1
+  AJV_FORMATS_VERSION: 3.0.1
+
+jobs:
+  catalog:
+    name: Catalogue
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      versions: ${{ steps.versions.outputs.versions }}
+      chain: ${{ steps.versions.outputs.chain }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Catalogue reconstruit depuis ses sources (fichiers officiels de PrestaShop pris sur GitHub)
+        run: python3 bin/build --check
+      - name: Fichiers PHP corrigés lisibles
+        run: |
+          php --version | head -1
+          find patches -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: Signature
+        if: hashFiles('catalog/catalog.json.sig') != ''
+        run: sh bin/verify
+      - id: versions
+        name: Versions de PrestaShop du catalogue
+        run: |
+          versions=$(jq -c '[.patches[].versions | keys[]] | unique' catalog/catalog.json)
+          # The upgrade chain: from the oldest version of the catalog to each newer one the assistant knows
+          # (config/upgrade.json of prestai-ci), in order.
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+          echo "chain=$(echo "$versions" | jq -r 'first')" >> "$GITHUB_OUTPUT"
+          echo "### Catalogue $(jq -r '.number' catalog/catalog.json) : versions $(echo "$versions" | jq -r 'join(", ")')" >> "$GITHUB_STEP_SUMMARY"
+
+  shops:
+    name: Boutique ${{ matrix.ps }}
+    needs: catalog
+    if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        ps: ${{ fromJSON(needs.catalog.outputs.versions) }}
+    steps:
+      - id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.PRESTAI_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PRESTAI_CI_APP_PRIVATE_KEY }}
+          owner: PrestaAI
+          repositories: prestai-ci,prestai-install,prestaicore
+          permission-contents: read
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: PrestaAI/prestai-ci
+          ref: v1
+          token: ${{ steps.token.outputs.token }}
+          path: .prestai-ci
+      - id: profile
+        name: Profil épinglé de prestai-install
+        run: echo "commit=$(jq -r .commit .prestai-ci/config/profile.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: PrestaAI/prestai-install
+          ref: ${{ steps.profile.outputs.commit }}
+          token: ${{ steps.token.outputs.token }}
+          path: .prestai-profile
+          sparse-checkout: |
+            profile
+            lib
+      - name: Core, fichiers corrigés, navigateur, Docker Hub
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          sh .prestai-ci/scripts/prestai-core.sh "$RUNNER_TEMP/core"
+          python3 bin/build --dist
+          npm install --prefix "$RUNNER_TEMP/node-tools" --no-save --no-audit --no-fund "playwright-core@$PLAYWRIGHT_CORE_VERSION" "ajv@$AJV_VERSION" "ajv-formats@$AJV_FORMATS_VERSION" > /dev/null
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin > /dev/null
+          fi
+          {
+            echo "PRESTAI_PROFILE_DIR=$GITHUB_WORKSPACE/.prestai-profile"
+            echo "MODULE_DIR=$RUNNER_TEMP/core/prestaicore"
+            echo "NODE_PATH=$RUNNER_TEMP/node-tools/node_modules"
+            echo "PATCHES_DIR=$GITHUB_WORKSPACE"
+          } >> "$GITHUB_ENV"
+      - name: Correctifs sur PrestaShop ${{ matrix.ps }}
+        env:
+          PS_IMAGE: prestashop/prestashop:${{ matrix.ps }}-8.3
+          OUT_DIR: ${{ runner.temp }}/shop
+          TESTS_DIR: ${{ github.workspace }}/tests/ci
+          PATCHES_SIGNED: ${{ inputs.signed && '1' || '' }}
+        run: sh .prestai-ci/scripts/install/run.sh
+      - name: Journaux et pages du test
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: boutique-${{ matrix.ps }}
+          path: ${{ runner.temp }}/shop
+          retention-days: 3
+
+  upgrade:
+    name: Montée par l'assistant depuis ${{ needs.catalog.outputs.chain }}
+    needs: catalog
+    if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.PRESTAI_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PRESTAI_CI_APP_PRIVATE_KEY }}
+          owner: PrestaAI
+          repositories: prestai-ci,prestai-install,prestaicore
+          permission-contents: read
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: PrestaAI/prestai-ci
+          ref: v1
+          token: ${{ steps.token.outputs.token }}
+          path: .prestai-ci
+      - id: profile
+        name: Profil épinglé de prestai-install
+        run: echo "commit=$(jq -r .commit .prestai-ci/config/profile.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: PrestaAI/prestai-install
+          ref: ${{ steps.profile.outputs.commit }}
+          token: ${{ steps.token.outputs.token }}
+          path: .prestai-profile
+          sparse-checkout: |
+            profile
+            lib
+      - name: Core, fichiers corrigés, navigateur, Docker Hub
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          sh .prestai-ci/scripts/prestai-core.sh "$RUNNER_TEMP/core"
+          python3 bin/build --dist
+          npm install --prefix "$RUNNER_TEMP/node-tools" --no-save --no-audit --no-fund "playwright-core@$PLAYWRIGHT_CORE_VERSION" "ajv@$AJV_VERSION" "ajv-formats@$AJV_FORMATS_VERSION" > /dev/null
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin > /dev/null
+          fi
+          {
+            echo "PRESTAI_PROFILE_DIR=$GITHUB_WORKSPACE/.prestai-profile"
+            echo "MODULE_DIR=$RUNNER_TEMP/core/prestaicore"
+            echo "NODE_PATH=$RUNNER_TEMP/node-tools/node_modules"
+            echo "PATCHES_DIR=$GITHUB_WORKSPACE"
+          } >> "$GITHUB_ENV"
+      # The shop of the oldest version, every patch applied and kept (KEEP=1), then each newer version known to the
+      # assistant, in order: after each upgrade, the patches integrated or to apply again, applied again.
+      - name: Boutique ${{ needs.catalog.outputs.chain }}, correctifs appliqués
+        env:
+          PS_IMAGE: prestashop/prestashop:${{ needs.catalog.outputs.chain }}-8.3
+          OUT_DIR: ${{ runner.temp }}/upgrade
+          TESTS_DIR: ${{ github.workspace }}/tests/upgrade
+          KEEP: '1'
+          PATCHES_SIGNED: ${{ inputs.signed && '1' || '' }}
+        run: sh .prestai-ci/scripts/install/run.sh
+      - name: Montées successives
+        env:
+          OUT_DIR: ${{ runner.temp }}/upgrade
+          PATCHES_SIGNED: ${{ inputs.signed && '1' || '' }}
+        run: |
+          from=${{ needs.catalog.outputs.chain }}
+          for target in $(jq -r --arg from "$from" '.prestashop | keys[] | select(. as $v | [$v, $from] | map(split(".") | map(tonumber)) | .[0] > .[1])' .prestai-ci/config/upgrade.json | sort -V); do
+            OUT_DIR="$OUT_DIR/$target" sh .prestai-ci/bin/upgrade "$target"
+            PRESTAI_CI_TEST="$GITHUB_WORKSPACE/.prestai-ci/scripts/install/module-test.cjs" PS=prestai-ci-8080-ps BASE=http://localhost:8080 INNER_BASE=http://127.0.0.1 \
+              ADMIN=admin-dev ADMIN_MAIL=ci@prestai.test ADMIN_PASSWD=PrestaiCi-2026 OUT_DIR="$OUT_DIR/$target" UPGRADE_STEP=after \
+              node tests/upgrade/upgrade.cjs > "$OUT_DIR/$target/upgrade-test.log" 2>&1 || true
+            cat "$OUT_DIR/$target/upgrade-test.log"
+            if grep -q '^ÉCHEC' "$OUT_DIR/$target/upgrade-test.log" || ! grep -q '^OK' "$OUT_DIR/$target/upgrade-test.log"; then
+              echo "::error::Après la montée en $target : voir upgrade-test.log."
+              exit 1
+            fi
+          done
+      - name: Journaux de la montée
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: montee
+          path: ${{ runner.temp }}/upgrade
+          retention-days: 3

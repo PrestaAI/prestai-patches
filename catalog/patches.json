@@ -1,0 +1,106 @@
+{
+ "concurrent-orders": {
+  "advisories": [
+   "B8",
+   "B9"
+  ],
+  "symfony_cache": true,
+  "source": {
+   "commits": [
+    "cfc7c452ea7e534cc6d47ece163326f1b839f9f9",
+    "e0a193e54fe56c5eea23bb434aa9fb2438dc90ba"
+   ],
+   "how": "Three-way merge of 9.2.0 -> 9.2.1 into the version (PaymentModule.php: the use lines, common.yml: the context, resolved by hand; the same lines changed as 9.2.0 -> 9.2.1); CartRuleQuantityReserver.php and OrderCreationLock.php as in 9.2.1. Not OrderController.php of e0a193e: B10, lot 2."
+  },
+  "versions": {
+   "9.1.4": [
+    "classes/PaymentModule.php",
+    "controllers/front/OrderConfirmationController.php",
+    "src/PrestaShopBundle/Resources/config/services/adapter/common.yml",
+    "src/Adapter/CartRule/CartRuleQuantityReserver.php",
+    "src/Adapter/Order/OrderCreationLock.php"
+   ],
+   "9.1.5": [
+    "classes/PaymentModule.php",
+    "controllers/front/OrderConfirmationController.php",
+    "src/PrestaShopBundle/Resources/config/services/adapter/common.yml",
+    "src/Adapter/CartRule/CartRuleQuantityReserver.php",
+    "src/Adapter/Order/OrderCreationLock.php"
+   ]
+  }
+ },
+ "customization-file": {
+  "advisories": [
+   "B17"
+  ],
+  "source": {
+   "commits": [
+    "1a6d5968cc7d71a365eec4398e021455fd026ef5"
+   ],
+   "how": "Three-way merge of the commit (base: its parent) into the version, without conflict; the same lines changed as the commit."
+  },
+  "versions": {
+   "9.1.4": [
+    "controllers/front/UploadController.php",
+    "src/Adapter/Presenter/Order/OrderLazyArray.php"
+   ],
+   "9.1.5": [
+    "controllers/front/UploadController.php",
+    "src/Adapter/Presenter/Order/OrderLazyArray.php"
+   ]
+  }
+ },
+ "password-reset-token": {
+  "advisories": [
+   "B18"
+  ],
+  "source": {
+   "commits": [
+    "63cfad7e9d084ea0859144ab24e9f67e3288eea1"
+   ],
+   "how": "Three-way merge of the commit (base: its parent) into the version, without conflict; the same lines changed as the commit."
+  },
+  "versions": {
+   "9.1.4": [
+    "classes/Customer.php",
+    "classes/Employee.php",
+    "controllers/front/PasswordController.php",
+    "src/PrestaShopBundle/Security/Admin/EmployeePasswordResetter.php"
+   ],
+   "9.1.5": [
+    "classes/Customer.php",
+    "classes/Employee.php",
+    "controllers/front/PasswordController.php",
+    "src/PrestaShopBundle/Security/Admin/EmployeePasswordResetter.php"
+   ]
+  }
+ },
+ "catch-up-9-1-5": {
+  "advisories": [
+   "A1",
+   "A2",
+   "A3",
+   "A4",
+   "A5"
+  ],
+  "source": {
+   "commits": [
+    "aee413eedd5fdc5053f28fb998da4b7e286cf641"
+   ],
+   "how": "The official files of 9.1.5 (tag 9.1.5): the five advisories fixed in 9.1.5, merged in 9.1.4, give exactly these files. classes/Tools.php of 9.1.5 also carries 744c1f6 (htmlToText, not security; nothing calls it in 9.1.4)."
+  },
+  "versions": {
+   "9.1.4": [
+    "classes/ImageManager.php",
+    "classes/Tools.php",
+    "controllers/admin/AdminImportController.php",
+    "src/Adapter/Import/Handler/ProductImportHandler.php",
+    "src/Adapter/Import/ImageCopier.php",
+    "src/Adapter/Tools.php",
+    "classes/controller/AdminController.php",
+    "src/PrestaShopBundle/Controller/Admin/CommonController.php",
+    "src/PrestaShopBundle/Component/CsvResponse.php"
+   ]
+  }
+ }
+}

@@ -1,0 +1,87 @@
+# Publication d'un catalogue : le tag catalog-NNNN, posé par le script de publication après la signature sur le PC
+# (README). Avant de publier quoi que ce soit : le numéro du tag est celui du catalogue et plus grand que celui de la
+# dernière release, la signature est vérifiée avec les clés de Core, le catalogue se reconstruit à l'octet près, puis
+# la CI complète (ci.yml) : boutiques de chaque version, Core vérifiant lui-même la signature, et montée par l'assistant.
+# Seulement si tout passe : la release catalog-NNNN, marquée « latest » (Core lit releases/latest/download/catalog.json),
+# avec catalog.json, catalog.json.sig et chaque fichier corrigé nommé par son sha256.
+name: Release
+
+on:
+  push:
+    tags: ['catalog-*']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Tag, numéro, signature
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Le tag est celui du catalogue, son numéro le plus grand publié
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          number=$(jq -r .number catalog/catalog.json)
+          expected=$(printf 'catalog-%04d' "$number")
+          [ "$TAG" = "$expected" ] || { echo "::error::Tag $TAG, catalogue n° $number : $expected attendu."; exit 1; }
+          last=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --limit 100 --json tagName --jq '[.[].tagName | select(startswith("catalog-")) | ltrimstr("catalog-") | tonumber] | max // 0')
+          [ "$number" -gt "$last" ] || { echo "::error::Catalogue n° $number : la dernière release publiée a déjà le n° $last (un numéro ne sert qu'une fois)."; exit 1; }
+          echo "Catalogue n° $number, dernière release publiée n° $last"
+      - name: Signature (clés de Core)
+        run: sh bin/verify
+      - name: Catalogue reconstruit depuis ses sources
+        run: python3 bin/build --check
+
+  ci:
+    name: CI
+    needs: check
+    uses: ./.github/workflows/ci.yml
+    with:
+      signed: true
+    secrets: inherit
+
+  publish:
+    name: Publication
+    needs: [check, ci]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Release ${{ github.ref_name }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          python3 bin/build --dist
+          sh bin/verify
+          # The notes: the section of the catalog in CHANGELOG.md.
+          awk -v tag="## $TAG" '$0 == tag {on = 1; next} on && /^## / {exit} on' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          [ -s "$RUNNER_TEMP/notes.md" ] || { echo "::error::CHANGELOG.md sans section « ## $TAG »."; exit 1; }
+          # A tag push can be delivered twice: the second run replaces the files of the existing release.
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" catalog/catalog.json catalog/catalog.json.sig dist/files/* --clobber
+          else
+            gh release create "$TAG" catalog/catalog.json catalog/catalog.json.sig dist/files/* --verify-tag --latest \
+              --title "Catalogue $(jq -r .number catalog/catalog.json)" --notes-file "$RUNNER_TEMP/notes.md"
+          fi
+          count=$(ls dist/files | wc -l)
+          echo "### Release $TAG publiée : catalog.json ($(sha256sum catalog/catalog.json | cut -c1-16)…), sa signature, $count fichiers corrigés" >> "$GITHUB_STEP_SUMMARY"
+      - name: Ce que lit Core
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          sleep 10
+          curl -fsSL -o "$RUNNER_TEMP/latest.json" https://github.com/${{ github.repository }}/releases/latest/download/catalog.json
+          curl -fsSL -o "$RUNNER_TEMP/latest.json.sig" https://github.com/${{ github.repository }}/releases/latest/download/catalog.json.sig
+          cmp "$RUNNER_TEMP/latest.json" catalog/catalog.json
+          sh bin/verify "$RUNNER_TEMP/latest.json" "$RUNNER_TEMP/latest.json.sig"
+          first=$(jq -r '[.patches[].versions[][]] | first | .after' catalog/catalog.json)
+          curl -fsSL -o "$RUNNER_TEMP/file" "https://github.com/${{ github.repository }}/releases/download/$TAG/$first"
+          [ "$(sha256sum "$RUNNER_TEMP/file" | cut -d' ' -f1)" = "$first" ]
+          echo "releases/latest/download/catalog.json : le catalogue publié, signature vérifiée ; un fichier corrigé lu à son adresse."

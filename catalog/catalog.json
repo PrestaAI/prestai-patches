@@ -1,0 +1,647 @@
+{
+ "format": 1,
+ "number": 1,
+ "date": "2026-11-23T08:00:00Z",
+ "branches": {
+  "9.1": {
+   "supported": false,
+   "last": "9.1.5"
+  },
+  "9.2": {
+   "supported": true,
+   "last": "9.2.1"
+  }
+ },
+ "advisories": [
+  {
+   "id": "B1",
+   "ghsa": "GHSA-p292-3rh4-vm4p",
+   "cvss": 8.8,
+   "exposure": "api_client",
+   "title": {
+    "en": "An API client that manages API clients grants itself every right",
+    "fr": "Un client de l’API d’administration qui gère les clients API s’accorde tous les droits"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 2,
+   "check": "admin_api_clients"
+  },
+  {
+   "id": "B2",
+   "ghsa": "GHSA-99cp-c6mm-p7h5",
+   "cvss": 8.7,
+   "exposure": "employee",
+   "title": {
+    "en": "Cross-site scripting through an uploaded SVG (file manager, logo)",
+    "fr": "XSS par un SVG téléversé (gestionnaire de fichiers, logo)"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B3",
+   "ghsa": "GHSA-wrmc-gmx5-9hhc",
+   "cvss": 8.5,
+   "exposure": "webservice",
+   "title": {
+    "en": "A Webservice key that writes attachments names a file outside their folder",
+    "fr": "Une clé Webservice qui écrit des pièces jointes nomme un fichier hors de leur dossier"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 2,
+   "check": "webservice_attachments"
+  },
+  {
+   "id": "B4",
+   "ghsa": "GHSA-hjwq-7qvv-qxj4",
+   "cvss": 8.1,
+   "exposure": "webservice",
+   "title": {
+    "en": "Multistore: a key limited to one shop reads and changes the customers of the others",
+    "fr": "Multiboutique : une clé limitée à une boutique lit et modifie les clients des autres"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 1,
+   "check": "multishop_or_webservice"
+  },
+  {
+   "id": "B5",
+   "ghsa": "GHSA-8rxw-79mh-gmm5",
+   "cvss": 8.1,
+   "exposure": "anonymous",
+   "title": {
+    "en": "The installer runs again and overwrites the configuration",
+    "fr": "Installeur relancé, configuration écrasée"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 1,
+   "check": "install_dir_absent"
+  },
+  {
+   "id": "B6",
+   "ghsa": "GHSA-h2q4-7fp7-m5jp",
+   "cvss": 8.1,
+   "exposure": "anonymous",
+   "title": {
+    "en": "PHP object injection through the cookie of the installer",
+    "fr": "Injection d’objet PHP par le cookie de l’installeur"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 1,
+   "check": "install_dir_absent"
+  },
+  {
+   "id": "B7",
+   "ghsa": "GHSA-3f36-4qv4-vfgh",
+   "cvss": 8.1,
+   "exposure": "webservice",
+   "title": {
+    "en": "Multistore: id_shop=all bypasses the limit of a key",
+    "fr": "Multiboutique : id_shop=all contourne la limite d’une clé"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 1,
+   "check": "multishop_or_webservice"
+  },
+  {
+   "id": "B8",
+   "ghsa": "GHSA-r246-6gw4-pj3p",
+   "cvss": 7.5,
+   "exposure": "customer",
+   "title": {
+    "en": "The usage limit of a voucher bypassed by simultaneous orders",
+    "fr": "Limite d’utilisation d’un bon contournée par des commandes simultanées"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "patch",
+   "lot": 1,
+   "patch": "concurrent-orders"
+  },
+  {
+   "id": "B9",
+   "ghsa": "GHSA-2676-hc74-gg7v",
+   "cvss": 7.5,
+   "exposure": "customer",
+   "title": {
+    "en": "Several orders from one free cart through simultaneous requests",
+    "fr": "Plusieurs commandes d’un seul panier gratuit par des requêtes simultanées"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "patch",
+   "lot": 1,
+   "patch": "concurrent-orders"
+  },
+  {
+   "id": "B10",
+   "ghsa": "GHSA-mgcf-mrg4-mcxv",
+   "cvss": 4.9,
+   "exposure": "employee",
+   "title": {
+    "en": "The right to create orders also allows to change them",
+    "fr": "Le droit « créer » sur les commandes permet aussi de les modifier"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B11",
+   "ghsa": "GHSA-7q68-ch46-pxmc",
+   "cvss": 7.2,
+   "exposure": "employee",
+   "title": {
+    "en": "Theme or module import writes outside its folder",
+    "fr": "Import de thème ou de module : écriture hors du dossier"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B12",
+   "ghsa": "GHSA-fxq4-2mc8-99pr",
+   "cvss": 7.2,
+   "exposure": "employee",
+   "title": {
+    "en": "Translations page includes an uploaded file",
+    "fr": "Page Traductions : inclusion d’un fichier téléversé"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B13",
+   "ghsa": "GHSA-95w6-v2wq-cv8w",
+   "cvss": 7.2,
+   "exposure": "employee",
+   "title": {
+    "en": "Theme import from a URL writes in the admin folder",
+    "fr": "Import de thème depuis une URL : écriture dans le dossier admin"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B14",
+   "ghsa": "GHSA-5p6p-mx64-96jf",
+   "cvss": 7.2,
+   "exposure": "employee",
+   "title": {
+    "en": "E-mail translations write a file outside their folder",
+    "fr": "Traductions des e-mails : écriture de fichier hors du dossier"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B15",
+   "ghsa": "GHSA-95f5-jc9c-gg3q",
+   "cvss": 7.2,
+   "exposure": "employee",
+   "title": {
+    "en": "Debug mode writes PHP code in config/defines_custom.inc.php",
+    "fr": "Mode debug : du code PHP écrit dans config/defines_custom.inc.php"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "none",
+   "lot": 2
+  },
+  {
+   "id": "B16",
+   "ghsa": "GHSA-6c2j-pgwm-95m9",
+   "cvss": 7.1,
+   "exposure": "api_client",
+   "title": {
+    "en": "Disabling an API client or revoking its tokens has no effect",
+    "fr": "Désactiver un client de l’API ou révoquer ses jetons n’a pas d’effet"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "check",
+   "lot": 2,
+   "check": "admin_api_clients"
+  },
+  {
+   "id": "B17",
+   "ghsa": "GHSA-fg9q-mm4c-h5xc",
+   "cvss": 5.9,
+   "exposure": "anonymous",
+   "title": {
+    "en": "A customization file readable with the order reference and its name",
+    "fr": "Fichier de personnalisation lisible avec la référence de commande et son nom"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "patch",
+   "lot": 1,
+   "patch": "customization-file"
+  },
+  {
+   "id": "B18",
+   "ghsa": "GHSA-g6p7-cx52-hcrj",
+   "cvss": 4.8,
+   "exposure": "anonymous",
+   "title": {
+    "en": "Predictable password reset token when the secure key of the customer is known",
+    "fr": "Jeton de nouveau mot de passe prévisible quand la clé secrète du client est connue"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.2.1",
+   "way": "patch",
+   "lot": 1,
+   "patch": "password-reset-token"
+  },
+  {
+   "id": "A1",
+   "ghsa": "GHSA-xrwj-pq6w-f8m4",
+   "cvss": 8.2,
+   "exposure": "employee",
+   "title": {
+    "en": "Requests forged to the internal network by the image URLs of the CSV import",
+    "fr": "Requêtes forgées vers le réseau interne par les URL d’images de l’import CSV"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.1.5",
+   "way": "patch",
+   "lot": 1,
+   "patch": "catch-up-9-1-5"
+  },
+  {
+   "id": "A2",
+   "ghsa": "GHSA-2cr4-vw9p-pjvf",
+   "cvss": 7.3,
+   "exposure": "anonymous",
+   "title": {
+    "en": "IP address spoofed through X-Forwarded-For behind a proxy",
+    "fr": "Adresse IP usurpée par X-Forwarded-For derrière un proxy"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.1.5",
+   "way": "patch",
+   "lot": 1,
+   "patch": "catch-up-9-1-5"
+  },
+  {
+   "id": "A3",
+   "ghsa": "GHSA-whxq-pxj5-qq7v",
+   "cvss": 6.5,
+   "exposure": "employee",
+   "title": {
+    "en": "SQL injection through the filters of the lists of the back office",
+    "fr": "Injection SQL par les filtres des listes du back-office"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.1.5",
+   "way": "patch",
+   "lot": 1,
+   "patch": "catch-up-9-1-5"
+  },
+  {
+   "id": "A4",
+   "ghsa": "GHSA-jf3w-9rmr-5rcr",
+   "cvss": 4.3,
+   "exposure": "employee",
+   "title": {
+    "en": "Notifications of the back office show customer data to any employee",
+    "fr": "Notifications du back-office : données clients visibles par tout employé"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.1.5",
+   "way": "patch",
+   "lot": 1,
+   "patch": "catch-up-9-1-5"
+  },
+  {
+   "id": "A5",
+   "ghsa": "GHSA-w6j9-q9rq-wrqg",
+   "cvss": 8.0,
+   "exposure": "customer",
+   "title": {
+    "en": "Formulas injected in the CSV exports",
+    "fr": "Formules injectées dans les exports CSV"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.1.5",
+   "way": "patch",
+   "lot": 1,
+   "patch": "catch-up-9-1-5"
+  },
+  {
+   "id": "M1",
+   "ghsa": "GHSA-wwqh-cf9m-347f",
+   "cvss": 5.3,
+   "exposure": "customer",
+   "title": {
+    "en": "psgdpr: unchecked reference in the consents recorded in the front office",
+    "fr": "psgdpr : référence non contrôlée dans l’enregistrement des consentements"
+   },
+   "from": "8.0.0",
+   "fixed_in": null,
+   "way": "module",
+   "lot": 1,
+   "module": {
+    "name": "psgdpr",
+    "min_version": "1.4.4"
+   }
+  },
+  {
+   "id": "M2",
+   "ghsa": "GHSA-pg6j-qf29-gc43",
+   "cvss": 6.1,
+   "exposure": "anonymous",
+   "title": {
+    "en": "ps_emailsubscription: formulas injected in the export of the subscribers",
+    "fr": "ps_emailsubscription : formules injectées dans l’export des abonnés"
+   },
+   "from": "8.0.0",
+   "fixed_in": null,
+   "way": "module",
+   "lot": 1,
+   "module": {
+    "name": "ps_emailsubscription",
+    "min_version": "3.0.1"
+   }
+  },
+  {
+   "id": "C1",
+   "ghsa": "GHSA-w9f3-qc75-qgx9",
+   "cvss": 9.3,
+   "exposure": "anonymous",
+   "title": {
+    "en": "Cross-site scripting in the threads of customer service",
+    "fr": "XSS dans les fils du SAV"
+   },
+   "from": "9.0.0",
+   "fixed_in": "9.1.1",
+   "way": "none",
+   "lot": 1,
+   "hotfix_modules": [
+    "pshotfix_ghsaw9f3qc75qgx9"
+   ]
+  }
+ ],
+ "patches": {
+  "concurrent-orders": {
+   "advisories": [
+    "B8",
+    "B9"
+   ],
+   "symfony_cache": true,
+   "versions": {
+    "9.1.4": [
+     {
+      "path": "classes/PaymentModule.php",
+      "before": "43b9ff68100e128bde6216e9aa432e947df8dd9a88f773be898fe5cae59e6480",
+      "after": "c2ebf697c3a3f7fb1fe24a97b6d5f4da74bb2ae69b117ed7c380a830000e6f0a",
+      "size": 70279
+     },
+     {
+      "path": "controllers/front/OrderConfirmationController.php",
+      "before": "d8df8c9a61ebefda50e8e56285316aa4f9aa838e6f5c3f4472a81f551613d62b",
+      "after": "9a8a0888ef9c6323e08bd676652cd4369176ff2cc7fede70c8fe56f09b69284c",
+      "size": 13960
+     },
+     {
+      "path": "src/PrestaShopBundle/Resources/config/services/adapter/common.yml",
+      "before": "5bd8fd8de265b8e859786be288365f58b34cc8fc79944d8b86f45a18c8c7cfc2",
+      "after": "d437e0eb98f100b29aff898c00ec4c13b79c740541b6b1bd21d165452de54fa9",
+      "size": 2675
+     },
+     {
+      "path": "src/Adapter/CartRule/CartRuleQuantityReserver.php",
+      "before": "absent",
+      "after": "a7c12184feed0e4d84f616e14291dbd133112a94f8f05b42c9c727dcbbd8484a",
+      "size": 2660
+     },
+     {
+      "path": "src/Adapter/Order/OrderCreationLock.php",
+      "before": "absent",
+      "after": "5960c1442542715a2bf75ef24ac60e87444c044d28d0f58c0bf55d268429956a",
+      "size": 1965
+     }
+    ],
+    "9.1.5": [
+     {
+      "path": "classes/PaymentModule.php",
+      "before": "b4d8ed6a2882442de23f303bae93d3a435cbe175a166f5546ba2e8d4256524b0",
+      "after": "0d7531eeb770f596e0b15c7a38f79f0a9b6c4b900b28afd69b45dfdc868c4d36",
+      "size": 71701
+     },
+     {
+      "path": "controllers/front/OrderConfirmationController.php",
+      "before": "d8df8c9a61ebefda50e8e56285316aa4f9aa838e6f5c3f4472a81f551613d62b",
+      "after": "9a8a0888ef9c6323e08bd676652cd4369176ff2cc7fede70c8fe56f09b69284c",
+      "size": 13960
+     },
+     {
+      "path": "src/PrestaShopBundle/Resources/config/services/adapter/common.yml",
+      "before": "5bd8fd8de265b8e859786be288365f58b34cc8fc79944d8b86f45a18c8c7cfc2",
+      "after": "d437e0eb98f100b29aff898c00ec4c13b79c740541b6b1bd21d165452de54fa9",
+      "size": 2675
+     },
+     {
+      "path": "src/Adapter/CartRule/CartRuleQuantityReserver.php",
+      "before": "absent",
+      "after": "a7c12184feed0e4d84f616e14291dbd133112a94f8f05b42c9c727dcbbd8484a",
+      "size": 2660
+     },
+     {
+      "path": "src/Adapter/Order/OrderCreationLock.php",
+      "before": "absent",
+      "after": "5960c1442542715a2bf75ef24ac60e87444c044d28d0f58c0bf55d268429956a",
+      "size": 1965
+     }
+    ]
+   }
+  },
+  "customization-file": {
+   "advisories": [
+    "B17"
+   ],
+   "symfony_cache": false,
+   "versions": {
+    "9.1.4": [
+     {
+      "path": "controllers/front/UploadController.php",
+      "before": "77e562d34abb7e9c00f6fedb60ceebb1800b4ad8eac42d39275e1e83ea6d11ea",
+      "after": "0c6dbd60da2c80c353f8253d1e8c59bacb6db0d5373f07aaef800b8b3924eff4",
+      "size": 2962
+     },
+     {
+      "path": "src/Adapter/Presenter/Order/OrderLazyArray.php",
+      "before": "153669a7c6f154cb57373cf83bf4c133bb91b5366b9c68c61f2ee9258160477c",
+      "after": "6299036e85238156b5ae4b841c81b33de60dababa6fe04f467cd8b0dca7ef9df",
+      "size": 19432
+     }
+    ],
+    "9.1.5": [
+     {
+      "path": "controllers/front/UploadController.php",
+      "before": "77e562d34abb7e9c00f6fedb60ceebb1800b4ad8eac42d39275e1e83ea6d11ea",
+      "after": "0c6dbd60da2c80c353f8253d1e8c59bacb6db0d5373f07aaef800b8b3924eff4",
+      "size": 2962
+     },
+     {
+      "path": "src/Adapter/Presenter/Order/OrderLazyArray.php",
+      "before": "153669a7c6f154cb57373cf83bf4c133bb91b5366b9c68c61f2ee9258160477c",
+      "after": "6299036e85238156b5ae4b841c81b33de60dababa6fe04f467cd8b0dca7ef9df",
+      "size": 19432
+     }
+    ]
+   }
+  },
+  "password-reset-token": {
+   "advisories": [
+    "B18"
+   ],
+   "symfony_cache": false,
+   "versions": {
+    "9.1.4": [
+     {
+      "path": "classes/Customer.php",
+      "before": "550a012b117152a82213e576578b0aae801b118f75af713308445075a6593fc4",
+      "after": "7cb944576c07c4d6715c9778776f10e3bc42b144dca751e9023f1516028d7703",
+      "size": 54696
+     },
+     {
+      "path": "classes/Employee.php",
+      "before": "a1144a22d09c853d3e5b90ab2d23c9efb19b017c1f1a01dee93ab6977d44cd79",
+      "after": "1fa575f091863978cca80a2ae89a88c90dfabaab80384a6720d14162cfb47021",
+      "size": 22926
+     },
+     {
+      "path": "controllers/front/PasswordController.php",
+      "before": "bd96808064ed50eae192c4c3001432a151df141fa0ff9fdb9f1072a601597d66",
+      "after": "8c5d517c0b1117afc59bbadef66cebdefb108956ecfd528de5e09ba5a707855c",
+      "size": 13800
+     },
+     {
+      "path": "src/PrestaShopBundle/Security/Admin/EmployeePasswordResetter.php",
+      "before": "3a9b03fc9a3e658d00edfd94e9fd077c5ddcdcbe94885810e24f62ed6a24ba5e",
+      "after": "8f1a28e84f081672cf8dc6c253ae9ef87f3390e363d41eaf435d0dae398ec934",
+      "size": 6395
+     }
+    ],
+    "9.1.5": [
+     {
+      "path": "classes/Customer.php",
+      "before": "b2cd94abca3c852cdfc3d7154aaef2cfc69bb8565ced108920f20acb188baa2b",
+      "after": "2b5925068cdc9472e177cfe474baa16df147b68c0600b50bf1ce9d28ca8aa90d",
+      "size": 54666
+     },
+     {
+      "path": "classes/Employee.php",
+      "before": "a1144a22d09c853d3e5b90ab2d23c9efb19b017c1f1a01dee93ab6977d44cd79",
+      "after": "1fa575f091863978cca80a2ae89a88c90dfabaab80384a6720d14162cfb47021",
+      "size": 22926
+     },
+     {
+      "path": "controllers/front/PasswordController.php",
+      "before": "bd96808064ed50eae192c4c3001432a151df141fa0ff9fdb9f1072a601597d66",
+      "after": "8c5d517c0b1117afc59bbadef66cebdefb108956ecfd528de5e09ba5a707855c",
+      "size": 13800
+     },
+     {
+      "path": "src/PrestaShopBundle/Security/Admin/EmployeePasswordResetter.php",
+      "before": "3a9b03fc9a3e658d00edfd94e9fd077c5ddcdcbe94885810e24f62ed6a24ba5e",
+      "after": "8f1a28e84f081672cf8dc6c253ae9ef87f3390e363d41eaf435d0dae398ec934",
+      "size": 6395
+     }
+    ]
+   }
+  },
+  "catch-up-9-1-5": {
+   "advisories": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5"
+   ],
+   "symfony_cache": false,
+   "versions": {
+    "9.1.4": [
+     {
+      "path": "classes/ImageManager.php",
+      "before": "29e81d7659323c8fb612fa713aac898455c285b001075675330ae5a190c799d7",
+      "after": "95ec6bd1f0f397d369e746193912bf223e6a749a6f2a93f81f62faf3fb646f6d",
+      "size": 32629
+     },
+     {
+      "path": "classes/Tools.php",
+      "before": "93a8283dc856eb8596e77946398db56a6d44f1d282cd8cedf561d2e2cfe991b9",
+      "after": "3fa44b9804eae62aed100fe457fdaf04dc9331725ccdde246eb2a836f862be74",
+      "size": 153551
+     },
+     {
+      "path": "controllers/admin/AdminImportController.php",
+      "before": "8a4f5af33aac9cedd99c7453b3c5af0632edf65a3c9d006d0bf825f4ea518e86",
+      "after": "a1dc6376aef943a76997c6778afdcb2556f5b074e75196af5d48bf31cf878b6f",
+      "size": 207480
+     },
+     {
+      "path": "src/Adapter/Import/Handler/ProductImportHandler.php",
+      "before": "cd02c7bc2f1450b2333376346695298cb2ac02aaede9a5fd48ff603af3afadfa",
+      "after": "6fe5d19446e4d0b873533522fb26643c8f0f3c6aac1abd114601da82a846a8cd",
+      "size": 47619
+     },
+     {
+      "path": "src/Adapter/Import/ImageCopier.php",
+      "before": "512eea0f68eec7e6b39ceb7e973d37a3f63edd72e6ba2243b139ae7468a455f9",
+      "after": "9ba8b5df14bf1d21da8d9f797a177f9c56824ae0d950b32d9335d37115195b74",
+      "size": 7449
+     },
+     {
+      "path": "src/Adapter/Tools.php",
+      "before": "695fdc056b13971659021de5ddb8756f7306cb18ed98a07d0eedf0bb3d4b9b32",
+      "after": "25a1e8ca7fac9058c4a9f469baef2a1f56624f4f4d03b57e5133bc5c727adcb0",
+      "size": 5136
+     },
+     {
+      "path": "classes/controller/AdminController.php",
+      "before": "cf79cb4c6df87a0ac6728ca497ce63d52ea9e3ea0476b2ae46c11fdef306ef25",
+      "after": "9401f55b21f638062c62fb41dac4121eb5994823e58c6bde2270675fc67875b4",
+      "size": 173341
+     },
+     {
+      "path": "src/PrestaShopBundle/Controller/Admin/CommonController.php",
+      "before": "0cdae9ecea64cf3cbfd838fcaa190cf4edd9568da75349d29c9eeeae2c881764",
+      "after": "c69023d40b973b8a932e9d401ad072e43da6668a5cbf29e37c7774c177832563",
+      "size": 13103
+     },
+     {
+      "path": "src/PrestaShopBundle/Component/CsvResponse.php",
+      "before": "51418952d9f7b481346cf7bea211c5a318a1cfbeccec6072e785a59ad6ed694b",
+      "after": "44750bea4a903b359516e14c964902c4ff219161cbc8505788b5dbb024307533",
+      "size": 7466
+     }
+    ]
+   }
+  }
+ }
+}

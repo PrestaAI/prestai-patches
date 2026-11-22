@@ -1,0 +1,36 @@
+#!/bin/sh
+# bin/verify [<catalog.json> [<catalog.json.sig>]]: the signature of a catalog checked with the public keys of
+# keys/, as PrestAI Core checks it (ECDSA P-256 on SHA-256, signature DER: openssl_verify(OPENSSL_ALGO_SHA256)).
+# First, each public key against its fingerprint (SHA-256 of the key in DER), the same as the one written in Core
+# (PrestaiCoreSecurityKeys): a key of keys/ changed here would never be accepted by Core. Prints the key that verifies
+# the signature; code 1 when none does. Needs openssl.
+set -eu
+root=$(cd "$(dirname "$0")/.." && pwd)
+catalog=${1:-$root/catalog/catalog.json}
+signature=${2:-$catalog.sig}
+command -v openssl > /dev/null || { echo "openssl introuvable."; exit 1; }
+[ -f "$catalog" ] || { echo "Catalogue absent : $catalog"; exit 1; }
+[ -f "$signature" ] || { echo "Signature absente : $signature (signée sur le PC de publication, README)"; exit 1; }
+
+# name, identifier (16 first characters of the fingerprint), fingerprint: the keys of PrestaiCoreSecurityKeys.
+keys='principale 44b650dd2f39856bfe112cd485a121d4c5e18a04be12af00879c861e529f2fcf
+secours f2b53b2ff6ade665c95f1179aa36f33f7ab7d2cf81a98799195cf58ae5659f5b'
+verified=''
+while read -r name print; do
+  pem=$root/keys/$name.pub.pem
+  got=$(openssl pkey -pubin -in "$pem" -outform DER 2> /dev/null | openssl dgst -sha256 -r | cut -d' ' -f1)
+  if [ "$got" != "$print" ]; then
+    echo "Clé $name : empreinte $got, $print attendue (celle de Core)."
+    exit 1
+  fi
+  if openssl dgst -sha256 -verify "$pem" -signature "$signature" "$catalog" > /dev/null 2>&1; then
+    verified="$name (${print%"${print#????????????????}"})"
+  fi
+done <<KEYS
+$keys
+KEYS
+if [ -z "$verified" ]; then
+  echo "Signature refusée : aucune des deux clés de Core ne la vérifie ($catalog)."
+  exit 1
+fi
+echo "Signature vérifiée : clé $verified, catalogue sha256 $(openssl dgst -sha256 -r "$catalog" | cut -d' ' -f1)"
