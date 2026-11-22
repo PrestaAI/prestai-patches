@@ -62,6 +62,11 @@ ci.run(async (t) => {
   execFileSync('docker', ['cp', dist + '/.', `${t.env.ps}:/tmp/prestai-patches/files`]);
   root('chown -R www-data:www-data /tmp/prestai-patches && chmod -R a+rX /tmp/prestai-patches');
 
+  // The logs as they are before the test: what the attacks leave there is checked, then removed (run.sh reads them).
+  const marks = php(`$files = [];
+foreach (glob(_PS_ROOT_DIR_ . '/var/logs/*.log') ?: [] as $file) { clearstatcache(true, $file); $files[basename($file)] = filesize($file); }
+echo json_encode(['log' => (int) Db::getInstance()->getValue('SELECT MAX(id_log) FROM ' . _DB_PREFIX_ . 'log'), 'files' => $files]);`);
+
   // 1. The catalog accepted by Core.
   let accepted;
   if (process.env.PATCHES_SIGNED === '1') {
@@ -205,7 +210,7 @@ echo json_encode(['id' => (int) $c->id, 'secure_key' => $c->secure_key, 'token' 
 $hashing = new PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing();
 $idLang = (int) Configuration::get('PS_LANG_DEFAULT');
 $e = new Employee(); $e->firstname = 'Secu'; $e->lastname = 'Translator'; $e->email = 'secu-translator-' . $stamp . '@example.com';
-$e->passwd = $hashing->hash('${PASSWD}'); $e->id_profile = 3; $e->id_lang = $idLang; $e->active = 1; $e->default_tab = (int) Tab::getIdFromClassName('AdminDashboard'); $e->add();
+$e->passwd = $hashing->hash('${PASSWD}'); $e->id_profile = 3; $e->id_lang = $idLang; $e->active = 1; $e->default_tab = (int) Tab::getIdFromClassName('AdminTranslations'); $e->add();
 foreach (['CIA3ONE', 'CIA3TWO'] as $code) {
     if (!CartRule::getIdByCode($code)) {
         $r = new CartRule(); foreach (Language::getIDs(false) as $id) { $r->name[$id] = 'Secu ' . $code; }
@@ -262,15 +267,19 @@ echo json_encode(['copied' => (bool) $ok]);`)) || {};
     const q = (c) => `(SELECT/**/COUNT(*)/**/FROM/**/${'ps_'}employee/**/WHERE/**/id_employee=1/**/AND/**/ASCII(SUBSTRING(passwd,1,1))=${c})=1/**/OR/**/a`;
     const yes = await rows(q(36));
     const no = await rows(q(37));
-    out.A3 = yes.rows !== no.rows ? 'sous-requête exécutée' : (yes.sqlError || no.sqlError ? 'erreur SQL' : 'refus');
+    // Fixed, the alias is a column name: an SQL error (Unknown column), as on 9.1.5 itself, and no more oracle.
+    out.A3 = yes.rows !== no.rows ? 'sous-requête exécutée' : 'refus';
+    out.A3sql = yes.sqlError || no.sqlError;
     // Normal use of the same list: filtered on a code.
     const url = await linkTo(page, 'controller=AdminCartRules');
     const html = await (await page.context().request.post(url, { form: { submitFiltercart_rule: '1', cart_ruleFilter_code: 'CIA3ONE' } })).text();
     out.filter = new Set(((html.match(/<table[^>]*id="table-cart_rule"[\s\S]*?<\/table>/) || [''])[0]).match(/id_cart_rule=\d+/g) || []).size;
     await page.context().request.post(url, { form: { submitResetcart_rule: '1' } });
     // A4: the notifications asked by an employee with the profile Translator; the administrator's.
+    // The translator lands on Translations, a page of its profile (the dashboard would refuse it).
     const translator = await login(data.translator, PASSWD);
-    const token = new URL(translator.url()).searchParams.get('_token');
+    const token = new URL(translator.url()).searchParams.get('_token')
+      || await translator.evaluate(() => { const a = [...document.querySelectorAll('a[href*="_token="]')][0]; return a ? new URL(a.href).searchParams.get('_token') : null; });
     const body = await (await translator.context().request.post(`${admin}/index.php/common/notifications?_token=${token}`)).text();
     out.A4 = /Formula/.test(body) ? 'données clients visibles' : 'refus';
     const adminToken = new URL(page.url()).searchParams.get('_token') || token;
@@ -427,6 +436,38 @@ echo json_encode($out);`)) || {};
     const again = await b17();
     t.check('Après le retour arrière : B17 de nouveau reproduite (le retour arrière remet bien le code d’origine)', again.refOnly === 'fichier', brief(again));
   }
+
+  // 7. The traces of the attacks refused, expected in the logs: counted, then removed, and only them (the lines and
+  // rows written since the start of the test that carry these messages).
+  const noise = {
+    cart: 'Cart cannot be loaded or an order has already been placed using this cart',
+    column: "Unknown column '(SELECT/**/COUNT(*)/**/FROM/**/",
+    denied: 'You do not have permission to view this.',
+  };
+  const removed = json(php(`$marks = json_decode(base64_decode('${b64(marks)}'), true);
+$noise = json_decode(base64_decode('${b64(JSON.stringify(noise))}'), true);
+$removed = array_fill_keys(array_keys($noise), 0);
+foreach (glob(_PS_ROOT_DIR_ . '/var/logs/*.log') ?: [] as $file) {
+    $from = isset($marks['files'][basename($file)]) ? (int) $marks['files'][basename($file)] : 0;
+    $all = (string) file_get_contents($file);
+    $kept = [];
+    foreach (explode("\n", substr($all, $from)) as $line) {
+        $hit = null;
+        foreach ($noise as $key => $text) { if (strpos($line, $text) !== false) { $hit = $key; } }
+        if ($hit === null) { $kept[] = $line; } else { ++$removed[$hit]; }
+    }
+    file_put_contents($file, substr($all, 0, $from) . implode("\n", $kept));
+}
+$db = Db::getInstance();
+foreach ($noise as $key => $text) {
+    $where = 'id_log > ' . (int) $marks['log'] . " AND message LIKE '" . pSQL($text) . "%'";
+    $removed[$key] += (int) $db->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'log WHERE ' . $where);
+    $db->delete('log', $where);
+}
+echo json_encode($removed);`)) || {};
+  t.check('Journaux : traces attendues des attaques refusées, comptées puis retirées (paniers en double refusés par le verrou'
+    + (has('catch-up-9-1-5') ? ', colonne inconnue de A3, 403 de A4' : '') + ')',
+    (!has('concurrent-orders') || removed.cart > 0) && (!has('catch-up-9-1-5') || (removed.column > 0 && removed.denied > 0)), brief(removed));
 });
 
 // -1, 0, 1 as version_compare.
