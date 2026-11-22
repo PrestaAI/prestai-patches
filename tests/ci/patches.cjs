@@ -236,7 +236,7 @@ $method = new ReflectionMethod('AdminImportController', 'copyImg'); $method->set
 $ok = $method->invoke(null, 1, (int) $image->id, 'http://127.0.0.1:9999/internal-admin/secret.jpg', 'products', false);
 $image->delete();
 echo json_encode(['copied' => (bool) $ok]);`)) || {};
-    const reached = Number(root('wc -l < /tmp/prestai-patches/ssrf.log 2>/dev/null || echo 0').trim()) || 0;
+    const reached = Number(root('[ -f /tmp/prestai-patches/ssrf.log ] && wc -l < /tmp/prestai-patches/ssrf.log || echo 0').trim()) || 0;
     // The bracket keeps pkill from matching its own shell, whose command line holds the pattern.
     root('pkill -f "php -S 127.0.0.1:999[9]" || true');
     out.A1 = copied.copied || reached > 0 ? 'réseau interne atteint' : 'refus';
@@ -281,7 +281,10 @@ echo json_encode(['copied' => (bool) $ok]);`)) || {};
     const token = new URL(translator.url()).searchParams.get('_token')
       || await translator.evaluate(() => { const a = [...document.querySelectorAll('a[href*="_token="]')][0]; return a ? new URL(a.href).searchParams.get('_token') : null; });
     const body = await (await translator.context().request.post(`${admin}/index.php/common/notifications?_token=${token}`)).text();
-    out.A4 = /Formula/.test(body) ? 'données clients visibles' : 'refus';
+    // Visible: the orders or the customers of the shop, with their names (an answer refused is not this JSON).
+    const notified = json(body) || {};
+    const names = ['order', 'customer'].flatMap((key) => ((notified[key] || {}).results || []).map((row) => row.customer_name || row.lastname || ''));
+    out.A4 = names.some((name) => /Secu/.test(name)) ? 'données clients visibles' : 'refus';
     const adminToken = new URL(page.url()).searchParams.get('_token') || token;
     const notifications = await page.context().request.post(`${admin}/index.php/common/notifications?_token=${adminToken}`);
     out.notifications = notifications.status();
